@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
   Plus, LayoutGrid,
   Download, Upload, Trash2, Settings,
-  CheckCheck, AlertCircle, ClipboardList, FileJson, Calendar
+  CheckCheck, AlertCircle, ClipboardList, FileJson, Calendar, Network
 } from 'lucide-react';
 import type { Task, Discipline, DisciplineDef, Location } from './types';
 import { getTheme } from './theme';
@@ -21,6 +21,7 @@ import PlanningGrid, { type PlanningGridRef } from './PlanningGrid';
 import AddTaskModal from './AddTaskModal';
 import TaskDrawer from './TaskDrawer';
 import GridSettingsModal from './GridSettingsModal';
+import AIInsightsModal from './AIInsightsModal';
 
 interface ModalContext { date: string; location: Location; }
 
@@ -75,6 +76,7 @@ export default function App() {
       : DEFAULT_LOCATIONS;
   });
   const [showGridSettings, setShowGridSettings] = useState(false);
+  const [showInsightsModal, setShowInsightsModal] = useState(false);
 
   // ── Project metadata (lazy-initialised) ───────────────────
   const [projectTitle, setProjectTitle] = useState<string>(() => {
@@ -419,6 +421,16 @@ export default function App() {
               Grid
             </button>
 
+            {/* AI Insights */}
+            <button
+              onClick={() => setShowInsightsModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-indigo-100 bg-gradient-to-br from-indigo-500 to-purple-600 border border-indigo-400/50 hover:from-indigo-600 hover:to-purple-700 hover:text-white transition-all active:scale-95 shadow-sm"
+              title="Force-Directed Optimization Graph"
+            >
+              <Network size={14} strokeWidth={2.5} />
+              AI Insights
+            </button>
+
             {/* Import */}
             <button
               onClick={handleImportClick}
@@ -596,6 +608,14 @@ export default function App() {
           disciplines={disciplines}
           onSave={handleSaveTask}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {/* ── AI INSIGHTS OVERLAY ────────────────────────────── */}
+      {showInsightsModal && (
+        <AIInsightsModal
+            tasks={tasks}
+            onClose={() => setShowInsightsModal(false)}
         />
       )}
 
