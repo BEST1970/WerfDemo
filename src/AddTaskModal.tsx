@@ -1,41 +1,31 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Plus, MapPin, Calendar, CheckCircle2, Pencil } from 'lucide-react';
-import type { Task, Discipline, Location } from './types';
-import { DISCIPLINES } from './mockData';
+import type { Task, Discipline, Location, DisciplineDef } from './types';
+import { getTheme } from './theme';
 
 interface Props {
   prefilledDate: string;
   prefilledLocation: Location;
   editTask?: Task;          // if set → Edit Mode
   contractors: string[];    // dynamic list from App state
+  disciplines: DisciplineDef[];
   onSave: (task: Task) => void;
   onClose: () => void;
 }
 
-const DISCIPLINE_COLORS: Record<Discipline, string> = {
-  Structural: '#64748b',
-  MEP:        '#3b82f6',
-  Electrical: '#22c55e',
-  Steelwork:  '#f97316',
-};
-const DISCIPLINE_ACCENT: Record<Discipline, { badge: string }> = {
-  Structural: { badge: 'bg-slate-100 text-slate-700 border-slate-200'  },
-  MEP:        { badge: 'bg-blue-50 text-blue-700 border-blue-100'      },
-  Electrical: { badge: 'bg-green-50 text-green-700 border-green-100'   },
-  Steelwork:  { badge: 'bg-orange-50 text-orange-700 border-orange-100'},
-};
+
 
 function generateId() { return 'task-' + Math.random().toString(36).slice(2, 9); }
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-export default function AddTaskModal({ prefilledDate, prefilledLocation, editTask, contractors, onSave, onClose }: Props) {
+export default function AddTaskModal({ prefilledDate, prefilledLocation, editTask, contractors, disciplines, onSave, onClose }: Props) {
   const isEdit = !!editTask;
 
   // Pre-fill from editTask when in edit mode
   const [name, setName]             = useState(editTask?.name ?? '');
-  const [discipline, setDiscipline] = useState<Discipline>(editTask?.discipline ?? 'Structural');
+  const [discipline, setDiscipline] = useState<Discipline>(editTask?.discipline ?? disciplines[0]?.name ?? 'Structural');
   const [contractor, setContractor] = useState(editTask?.contractor ?? contractors[0] ?? '');
   const [duration, setDuration]     = useState(editTask?.duration ?? 1);
   const [error, setError]           = useState('');
@@ -57,7 +47,7 @@ export default function AddTaskModal({ prefilledDate, prefilledLocation, editTas
       location:        prefilledLocation,
       date:            prefilledDate,
       contractor,
-      contractorColor: DISCIPLINE_COLORS[discipline],
+      contractorColor: theme.hexColor,
       isDone:          editTask?.isDone ?? false,
       duration:        Math.max(1, duration),
     };
@@ -65,8 +55,8 @@ export default function AddTaskModal({ prefilledDate, prefilledLocation, editTas
     onClose();
   }
 
-  const accent = DISCIPLINE_ACCENT[discipline];
-  const avatarColor = DISCIPLINE_COLORS[discipline];
+  const discDef = disciplines.find(d => d.name === discipline) || { name: discipline, theme: 'slate' };
+  const theme = getTheme(discDef.theme);
   const avatarInitials = contractor.split(' ')[0].slice(0, 2).toUpperCase();
 
   const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 ' +
@@ -126,10 +116,10 @@ export default function AddTaskModal({ prefilledDate, prefilledLocation, editTas
             <div>
               <label className={labelCls}>Discipline</label>
               <select value={discipline} onChange={(e) => setDiscipline(e.target.value as Discipline)} className={inputCls}>
-                {DISCIPLINES.map((d) => <option key={d} value={d}>{d}</option>)}
+                {disciplines.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
               </select>
               <div className="mt-1.5 flex items-center gap-1.5">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${accent.badge}`}>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                   {discipline}
                 </span>
                 <span className="text-[10px] text-slate-400">auto-color</span>
@@ -152,7 +142,7 @@ export default function AddTaskModal({ prefilledDate, prefilledLocation, editTas
             </select>
             <div className="mt-2 flex items-center gap-2">
               <span className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shadow transition-colors duration-200"
-                style={{ backgroundColor: avatarColor }}>
+                style={{ backgroundColor: theme.hexColor }}>
                 {avatarInitials}
               </span>
               <span className="text-[11px] text-slate-400">Avatar preview — color matches discipline</span>

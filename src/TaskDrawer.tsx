@@ -2,28 +2,19 @@ import { useEffect, useState } from 'react';
 import {
   X, MapPin, Calendar, Clock, Building2,
   Trash2, CheckCircle2, RotateCcw, Bot, ShieldCheck, Pencil,
-  HardHat, Zap, Wind, Wrench,
 } from 'lucide-react';
-import type { Task, Discipline } from './types';
+import type { Task, DisciplineDef } from './types';
+import { getTheme } from './theme';
 import { contractorInitials } from './mockData';
 
 interface Props {
   task: Task;
+  disciplines: DisciplineDef[];
   onClose: () => void;
   onToggleDone: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onEdit: () => void;
 }
-
-const DISCIPLINE_CFG: Record<Discipline, {
-  Icon: React.FC<{ size?: number; strokeWidth?: number; className?: string }>;
-  bg: string; text: string; border: string; label: string;
-}> = {
-  Structural: { Icon: HardHat, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', label: 'Structural' },
-  MEP:        { Icon: Wind,    bg: 'bg-blue-50',   text: 'text-blue-700',  border: 'border-blue-100',  label: 'MEP' },
-  Electrical: { Icon: Zap,     bg: 'bg-green-50',  text: 'text-green-700', border: 'border-green-100', label: 'Electrical' },
-  Steelwork:  { Icon: Wrench,  bg: 'bg-orange-50', text: 'text-orange-700',border: 'border-orange-100',label: 'Steelwork' },
-};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', {
@@ -31,7 +22,7 @@ function formatDate(iso: string) {
   });
 }
 
-export default function TaskDrawer({ task, onClose, onToggleDone, onDelete, onEdit }: Props) {
+export default function TaskDrawer({ task, disciplines, onClose, onToggleDone, onDelete, onEdit }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -53,8 +44,9 @@ export default function TaskDrawer({ task, onClose, onToggleDone, onDelete, onEd
   };
   const handleEdit = () => animateClose(onEdit);
 
-  const cfg = DISCIPLINE_CFG[task.discipline];
-  const { Icon } = cfg;
+  const discDef = disciplines.find(d => d.name === task.discipline) || { name: task.discipline, theme: 'slate' };
+  const theme = getTheme(discDef.theme);
+  const Icon  = theme.Icon;
 
   const rowCls  = 'flex items-start gap-3 py-3 border-b border-slate-100 last:border-0';
   const iconCls = 'mt-0.5 flex-shrink-0 text-slate-400';
@@ -82,8 +74,8 @@ export default function TaskDrawer({ task, onClose, onToggleDone, onDelete, onEd
         {/* Header */}
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-100 bg-white flex-shrink-0">
           <div className="flex-1 min-w-0 pr-3">
-            <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border mb-2 ${cfg.bg} ${cfg.text} ${cfg.border}`}>
-              <Icon size={10} strokeWidth={2.5} /> {cfg.label}
+            <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border mb-2 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+              <Icon size={10} strokeWidth={2.5} /> {discDef.name}
             </div>
             <h2 className={`text-base font-bold leading-snug ${task.isDone ? 'line-through text-slate-400' : 'text-slate-900'}`}>
               {task.name}

@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { X, Settings, Plus, Trash2, GripVertical } from 'lucide-react';
+import type { DisciplineDef } from './types';
+import { THEMES, getTheme } from './theme';
 
 interface Props {
   numWeeks: number;
   locations: string[];
   contractors: string[];
+  disciplines: DisciplineDef[];
   projectStartDate: string;   // YYYY-MM-DD
-  onSave: (numWeeks: number, locations: string[], contractors: string[], startDate: string) => void;
+  onSave: (numWeeks: number, locations: string[], contractors: string[], startDate: string, disciplines: DisciplineDef[]) => void;
   onClose: () => void;
 }
 
@@ -97,17 +100,21 @@ function ListSection({
   );
 }
 
-export default function GridSettingsModal({ numWeeks, locations, contractors, projectStartDate, onSave, onClose }: Props) {
+export default function GridSettingsModal({ numWeeks, locations, contractors, disciplines, projectStartDate, onSave, onClose }: Props) {
   const [weeks,       setWeeks]       = useState(numWeeks);
   const [locs,        setLocs]        = useState<string[]>([...locations]);
   const [ctors,       setCtors]       = useState<string[]>([...contractors]);
+  const [discs,       setDiscs]       = useState<DisciplineDef[]>([...disciplines]);
   const [startDate,   setStartDate]   = useState(projectStartDate);
   const [newLoc,      setNewLoc]      = useState('');
   const [newCtor,     setNewCtor]     = useState('');
+  const [newDiscName, setNewDiscName] = useState('');
+  const [newDiscTheme,setNewDiscTheme]= useState('slate');
   const [weeksError,  setWeeksError]  = useState('');
   const [dateError,   setDateError]   = useState('');
   const [locError,    setLocError]    = useState('');
   const [ctorError,   setCtorError]   = useState('');
+  const [discError,   setDiscError]   = useState('');
 
   function handleWeeksChange(val: string) {
     setWeeksError('');
@@ -133,6 +140,17 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, pr
   }
   function removeContractor(idx: number) { setCtors((p) => p.filter((_, i) => i !== idx)); }
 
+  // ── Disciplines helpers ───────────────────────
+  function addDiscipline() {
+    const t = newDiscName.trim();
+    if (!t)              { setDiscError('Discipline name cannot be empty.'); return; }
+    if (discs.some(d => d.name === t)) { setDiscError(`"${t}" already exists.`); return; }
+    setDiscs((p) => [...p, { name: t, theme: newDiscTheme }]);
+    setNewDiscName('');
+    setDiscError('');
+  }
+  function removeDiscipline(idx: number) { setDiscs((p) => p.filter((_, i) => i !== idx)); }
+
   function handleSave() {
     if (!startDate) { setDateError('Please select a valid start date.'); return; }
     const dow = new Date(startDate).getDay();
@@ -140,7 +158,8 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, pr
     if (weeks < 1 || weeks > 52) { setWeeksError('Must be between 1 and 52 weeks.'); return; }
     if (locs.length === 0)  { setLocError('At least one location is required.'); return; }
     if (ctors.length === 0) { setCtorError('At least one contractor is required.'); return; }
-    onSave(weeks, locs, ctors, startDate);
+    if (discs.length === 0) { setDiscError('At least one discipline is required.'); return; }
+    onSave(weeks, locs, ctors, startDate, discs);
     onClose();
   }
 
@@ -260,6 +279,75 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, pr
             error={ctorError}
             emptyMsg="No contractors defined."
           />
+
+          {/* ── Section 4: Disciplines ──────────────────────── */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-[11px] font-bold text-indigo-600">D</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-700 leading-none">Disciplines & Themes</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Customize fields and colors</p>
+              </div>
+              <span className="ml-auto text-[10px] text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 flex-shrink-0">
+                {discs.length} items
+              </span>
+            </div>
+
+            <div className="space-y-1.5 mb-3">
+              {discs.length === 0 && (
+                <p className="text-xs text-slate-400 italic text-center py-3">No disciplines defined.</p>
+              )}
+              {discs.map((disc, idx) => {
+                const theme = getTheme(disc.theme);
+                const Icon = theme.Icon;
+                return (
+                  <div key={`${disc.name}-${idx}`} className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 group">
+                    <GripVertical size={14} className="text-slate-300 flex-shrink-0" />
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                      <Icon size={12} strokeWidth={2.5} />
+                      {disc.name}
+                    </span>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => removeDiscipline(idx)}
+                      className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 size={13} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="e.g. Plumbing..."
+                value={newDiscName}
+                onChange={(e) => { setNewDiscName(e.target.value); setDiscError(''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDiscipline(); } }}
+                className={`${inputCls} flex-1`}
+              />
+              <select
+                value={newDiscTheme}
+                onChange={(e) => setNewDiscTheme(e.target.value)}
+                className={`${inputCls} w-32`}
+              >
+                {Object.values(THEMES).map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={addDiscipline}
+                className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold flex items-center gap-1.5 transition active:scale-95 flex-shrink-0"
+              >
+                <Plus size={15} strokeWidth={2.5} /> Add
+              </button>
+            </div>
+            {discError && <p className="text-xs text-red-600 mt-1.5">{discError}</p>}
+          </div>
 
           {/* Info notice */}
           <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">

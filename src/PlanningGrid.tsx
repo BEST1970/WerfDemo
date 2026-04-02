@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import type { Task, Location } from './types';
+import type { Task, Location, DisciplineDef } from './types';
 import TaskCard from './TaskCard';
 
 interface Props {
@@ -7,6 +7,7 @@ interface Props {
   startDate: string;    // YYYY-MM-DD — drives the real calendar engine
   numWeeks: number;
   locations: string[];
+  disciplines: DisciplineDef[];
   onTaskMove: (taskId: string, newDate: string, newLocation: Location) => void;
   onTaskClick: (taskId: string) => void;
   onCellClick: (date: string, location: Location) => void;
@@ -73,8 +74,7 @@ interface ResizeRef {
   startDuration: number;
   currentDuration: number;
 }
-
-export default function PlanningGrid({ tasks, startDate, numWeeks, locations, onTaskMove, onTaskClick, onCellClick, onResize }: Props) {
+export default function PlanningGrid({ tasks, startDate, numWeeks, locations, disciplines, onTaskMove, onTaskClick, onCellClick, onResize }: Props) {
 
   // ── Derived grid structures (memoised — recompute when start date or dimensions change) ──
   const COLUMNS = useMemo(() => buildColumns(startDate, numWeeks), [startDate, numWeeks]);
@@ -313,6 +313,7 @@ export default function PlanningGrid({ tasks, startDate, numWeeks, locations, on
               <div style={{ pointerEvents: 'auto' }}>
                 <TaskCard
                   task={task}
+                  disciplines={disciplines}
                   isResizing={isResizingThis}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}

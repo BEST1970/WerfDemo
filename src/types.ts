@@ -1,8 +1,9 @@
-export type Discipline =
-  | 'Structural'
-  | 'MEP'
-  | 'Electrical'
-  | 'Steelwork';
+export type Discipline = string;
+
+export interface DisciplineDef {
+  name: string;
+  theme: string;
+}
 
 // Location is now a free string — managed dynamically via Grid Settings
 export type Location = string;

@@ -4,11 +4,19 @@ import {
   Download, Upload, Trash2, Settings,
   CheckCheck, AlertCircle, ClipboardList, FileJson,
 } from 'lucide-react';
-import type { Task, Discipline, Location } from './types';
+import type { Task, Discipline, DisciplineDef, Location } from './types';
+import { getTheme } from './theme';
 import {
   DEFAULT_NUM_WEEKS,
   DEFAULT_LOCATIONS,
 } from './mockData';
+
+const DEFAULT_DISCIPLINES: DisciplineDef[] = [
+  { name: 'Structural', theme: 'slate' },
+  { name: 'MEP', theme: 'blue' },
+  { name: 'Electrical', theme: 'green' },
+  { name: 'Steelwork', theme: 'orange' },
+];
 import PlanningGrid from './PlanningGrid';
 import AddTaskModal from './AddTaskModal';
 import TaskDrawer from './TaskDrawer';
@@ -41,6 +49,12 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>(() => {
     const s = loadSaved();
     return (s?.tasks && Array.isArray(s.tasks)) ? (s.tasks as Task[]) : [];
+  });
+  const [disciplines, setDisciplines] = useState<DisciplineDef[]>(() => {
+    const s = loadSaved();
+    return (s?.disciplines && Array.isArray(s.disciplines) && s.disciplines.length > 0)
+      ? (s.disciplines as DisciplineDef[])
+      : DEFAULT_DISCIPLINES;
   });
   const [modalCtx, setModalCtx]             = useState<ModalContext | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -86,24 +100,24 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({
-        projectTitle, projectStartDate, numWeeks, locations, contractors, tasks,
+        projectTitle, projectStartDate, numWeeks, locations, contractors, disciplines, tasks,
       }));
     } catch {
       // storage quota exceeded — ignore
     }
-  }, [tasks, projectTitle, projectStartDate, numWeeks, locations, contractors]);
+  }, [tasks, projectTitle, projectStartDate, numWeeks, locations, contractors, disciplines]);
 
   // ── Stats ──────────────────────────────────────────────────
   const totalTasks  = tasks.length;
   const doneTasks   = tasks.filter((t) => t.isDone).length;
   const activeTasks = totalTasks - doneTasks;
   const donePercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-  const byDiscipline = {
-    Structural: tasks.filter((t) => t.discipline === 'Structural').length,
-    MEP:        tasks.filter((t) => t.discipline === 'MEP').length,
-    Electrical: tasks.filter((t) => t.discipline === 'Electrical').length,
-    Steelwork:  tasks.filter((t) => t.discipline === 'Steelwork').length,
-  };
+  const disciplineStats = useMemo(() => {
+    return disciplines.map(d => ({
+      ...d,
+      count: tasks.filter(t => t.discipline === d.name).length
+    }));
+  }, [disciplines, tasks]);
 
   // ── Active contractors legend ─────────────────────────────────
   // Stable palette — each contractor gets a consistent hue based on its name
@@ -153,7 +167,7 @@ export default function App() {
   async function handleExport() {
     if (tasks.length === 0) { showToast('error', 'Nothing to export — board is empty.'); return; }
 
-    const payload = { projectTitle, projectStartDate, numWeeks, locations, contractors, tasks };
+    const payload = { projectTitle, projectStartDate, numWeeks, locations, contractors, disciplines, tasks };
     const data    = JSON.stringify(payload, null, 2);
     const suggestedName = `${projectTitle || 'planning'}.json`;
 
@@ -222,6 +236,10 @@ export default function App() {
           importedNumWeeks  = typeof env.numWeeks     === 'number'  ? (env.numWeeks as number)    : null;
           importedLocations   = Array.isArray(env.locations)                          ? (env.locations    as string[]) : null;
           importedContractors = Array.isArray(env.contractors)                         ? (env.contractors  as string[]) : null;
+          const importedDisciplinesRaw = Array.isArray(env.disciplines) ? env.disciplines : null;
+          if (importedDisciplinesRaw && importedDisciplinesRaw.length > 0) {
+              setDisciplines(importedDisciplinesRaw as DisciplineDef[]);
+          }
           if (typeof env.projectStartDate === 'string' && env.projectStartDate) {
             setProjectStartDate(env.projectStartDate);
           }
@@ -278,17 +296,19 @@ export default function App() {
       setNumWeeks(DEFAULT_NUM_WEEKS);
       setLocations(DEFAULT_LOCATIONS);
       setContractors(['CFE', 'Sanitair', 'Electroplan', 'Maes Chape', 'Batinord']);
+      setDisciplines(DEFAULT_DISCIPLINES);
       localStorage.removeItem(LS_KEY);
       showToast('success', 'Board cleared — all state reset to defaults');
     }
   }
 
   // ── Grid settings ──────────────────────────────────────────
-  function handleSaveGridSettings(newWeeks: number, newLocations: string[], newContractors: string[], newStartDate: string) {
+  function handleSaveGridSettings(newWeeks: number, newLocations: string[], newContractors: string[], newStartDate: string, newDisciplines: DisciplineDef[]) {
     setNumWeeks(newWeeks);
     setLocations(newLocations);
     setContractors(newContractors);
     setProjectStartDate(newStartDate);
+    setDisciplines(newDisciplines);
     showToast('success', `Grid updated: ${newStartDate} · ${newWeeks}w · ${newLocations.length} loc`);
   }
 
@@ -436,17 +456,15 @@ export default function App() {
           <div className="w-px h-4 bg-slate-200 flex-shrink-0 mx-1" />
 
           {/* Discipline chips */}
-          {[
-            { label: 'Structural', dot: 'bg-slate-400',  pill: 'bg-slate-100 text-slate-700 border-slate-200',   count: byDiscipline.Structural },
-            { label: 'MEP',        dot: 'bg-blue-400',   pill: 'bg-blue-50 text-blue-700 border-blue-100',       count: byDiscipline.MEP },
-            { label: 'Electrical', dot: 'bg-green-400',  pill: 'bg-green-50 text-green-700 border-green-100',    count: byDiscipline.Electrical },
-            { label: 'Steelwork',  dot: 'bg-orange-400', pill: 'bg-orange-50 text-orange-700 border-orange-100', count: byDiscipline.Steelwork },
-          ].map(({ label, dot, pill, count }) => (
-            <span key={label} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${pill} flex-shrink-0`}>
-              <span className={`w-2 h-2 rounded-full ${dot}`} />
-              {label} <span className="font-bold opacity-70">{count}</span>
-            </span>
-          ))}
+          {disciplineStats.map((stat) => {
+            const theme = getTheme(stat.theme);
+            return (
+              <span key={stat.name} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} flex-shrink-0`}>
+                <span className={`w-2 h-2 rounded-full ${theme.resizeBar}`} />
+                {stat.name} <span className="font-bold opacity-70">{stat.count}</span>
+              </span>
+            );
+          })}
 
           {/* Active Contractors legend */}
           {activeContractors.length > 0 && (
@@ -484,6 +502,7 @@ export default function App() {
           startDate={projectStartDate}
           numWeeks={numWeeks}
           locations={locations}
+          disciplines={disciplines}
           onTaskMove={handleTaskMove}
           onTaskClick={handleTaskClick}
           onCellClick={handleCellClick}
@@ -534,6 +553,7 @@ export default function App() {
           numWeeks={numWeeks}
           locations={locations}
           contractors={contractors}
+          disciplines={disciplines}
           projectStartDate={projectStartDate}
           onSave={handleSaveGridSettings}
           onClose={() => setShowGridSettings(false)}
@@ -544,6 +564,7 @@ export default function App() {
       {selectedTask && (
         <TaskDrawer
           task={selectedTask}
+          disciplines={disciplines}
           onClose={() => setSelectedTaskId(null)}
           onToggleDone={handleToggleDone}
           onDelete={handleDeleteTask}
@@ -558,6 +579,7 @@ export default function App() {
           prefilledLocation={modalCtx.location}
           editTask={editingTask ?? undefined}
           contractors={contractors}
+          disciplines={disciplines}
           onSave={handleSaveTask}
           onClose={handleCloseModal}
         />

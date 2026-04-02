@@ -1,13 +1,14 @@
 import { useRef } from 'react';
-import type { Task, Discipline } from './types';
+import type { Task, DisciplineDef } from './types';
+import { getTheme } from './theme';
 import {
-  HardHat, Zap, Wind, Wrench,
   GripVertical, CheckCircle2,
 } from 'lucide-react';
 import { contractorInitials } from './mockData';
 
 interface Props {
   task: Task;
+  disciplines: DisciplineDef[];
   isResizing: boolean;          // visual highlight during resize
   onDragStart: (e: React.DragEvent, taskId: string) => void;
   onDragEnd: () => void;
@@ -15,48 +16,14 @@ interface Props {
   onResizeStart: (e: React.MouseEvent, taskId: string, currentDuration: number) => void;
 }
 
-const DISCIPLINE_CFG: Record<
-  Discipline,
-  {
-    Icon: React.FC<{ size?: number; strokeWidth?: number; className?: string }>;
-    activeBg: string; activeText: string; activeBorder: string;
-    badgeBg: string;  badgeText: string;  label: string;
-    resizeBar: string;  // color for resize handle bar
-  }
-> = {
-  Structural: {
-    Icon: HardHat,
-    activeBg: 'bg-slate-200', activeText: 'text-slate-800', activeBorder: 'border-slate-300',
-    badgeBg: 'bg-slate-300',  badgeText: 'text-slate-700',  label: 'Structural',
-    resizeBar: 'bg-slate-400',
-  },
-  MEP: {
-    Icon: Wind,
-    activeBg: 'bg-blue-100',  activeText: 'text-blue-800',  activeBorder: 'border-blue-200',
-    badgeBg: 'bg-blue-200',   badgeText: 'text-blue-700',   label: 'MEP',
-    resizeBar: 'bg-blue-400',
-  },
-  Electrical: {
-    Icon: Zap,
-    activeBg: 'bg-green-100', activeText: 'text-green-800', activeBorder: 'border-green-200',
-    badgeBg: 'bg-green-200',  badgeText: 'text-green-700',  label: 'Electrical',
-    resizeBar: 'bg-green-400',
-  },
-  Steelwork: {
-    Icon: Wrench,
-    activeBg: 'bg-orange-100', activeText: 'text-orange-900', activeBorder: 'border-orange-400',
-    badgeBg: 'bg-orange-200',  badgeText: 'text-orange-700',  label: 'Steelwork',
-    resizeBar: 'bg-orange-400',
-  },
-};
-
 export default function TaskCard({
-  task, isResizing,
+  task, disciplines, isResizing,
   onDragStart, onDragEnd, onTaskClick, onResizeStart,
 }: Props) {
-  const cfg   = DISCIPLINE_CFG[task.discipline];
-  const { Icon } = cfg;
-  const done  = task.isDone;
+  const discDef = disciplines.find(d => d.name === task.discipline) || { name: task.discipline, theme: 'slate' };
+  const theme = getTheme(discDef.theme);
+  const Icon = theme.Icon;
+  const done = task.isDone;
 
   // Suppress click that fires immediately after a drag-end
   const wasDragging = useRef(false);
@@ -81,11 +48,11 @@ export default function TaskCard({
   }
 
   /* ── Computed styles ─────────────────────────────────── */
-  const cardBg     = done ? 'bg-gray-100'     : cfg.activeBg;
-  const cardText   = done ? 'text-gray-400'   : cfg.activeText;
-  const cardBorder = done ? 'border-gray-200' : isResizing ? 'border-indigo-400' : cfg.activeBorder;
-  const badgeBg    = done ? 'bg-gray-200'     : cfg.badgeBg;
-  const badgeText  = done ? 'text-gray-400'   : cfg.badgeText;
+  const cardBg     = done ? 'bg-gray-100'     : theme.activeBg;
+  const cardText   = done ? 'text-gray-400'   : theme.activeText;
+  const cardBorder = done ? 'border-gray-200' : isResizing ? 'border-indigo-400' : theme.activeBorder;
+  const badgeBg    = done ? 'bg-gray-200'     : theme.badgeBg;
+  const badgeText  = done ? 'text-gray-400'   : theme.badgeText;
 
   return (
     <div
@@ -135,9 +102,9 @@ export default function TaskCard({
           title="Drag to resize duration"
         >
           {/* 3 dots indicator */}
-          <div className={`w-1 h-1 rounded-full ${isResizing ? cfg.resizeBar : 'bg-current'} opacity-40 group-hover:opacity-80`} />
-          <div className={`w-1 h-1 rounded-full ${isResizing ? cfg.resizeBar : 'bg-current'} opacity-60 group-hover:opacity-80`} />
-          <div className={`w-1 h-1 rounded-full ${isResizing ? cfg.resizeBar : 'bg-current'} opacity-40 group-hover:opacity-80`} />
+          <div className={`w-1 h-1 rounded-full ${isResizing ? theme.resizeBar : 'bg-current'} opacity-40 group-hover:opacity-80`} />
+          <div className={`w-1 h-1 rounded-full ${isResizing ? theme.resizeBar : 'bg-current'} opacity-60 group-hover:opacity-80`} />
+          <div className={`w-1 h-1 rounded-full ${isResizing ? theme.resizeBar : 'bg-current'} opacity-40 group-hover:opacity-80`} />
         </div>
       )}
 
@@ -147,7 +114,7 @@ export default function TaskCard({
         <div className="flex items-center justify-between gap-1 mb-2">
           <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${badgeBg} ${badgeText} flex-shrink-0`}>
             <Icon size={10} strokeWidth={2.5} />
-            {cfg.label}
+            {discDef.name}
           </span>
           <span
             className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
