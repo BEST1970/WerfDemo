@@ -96,9 +96,9 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
         });
     }
 
-    // Map contractors to stable hex colors (from existing tasks or fallback)
+    // Map contractors to stable hex colors (from existing tasks or fallback to a bright blue)
     const contractorMap = new Map<string, string>();
-    for (const t of tasks) contractorMap.set(t.contractor, t.contractorColor || '#8b5cf6');
+    for (const t of tasks) contractorMap.set(t.contractor, t.contractorColor || '#3b82f6');
 
     // Add Contractor Nodes
     for (const cont of activeContractors) {
@@ -120,6 +120,7 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
             links.push({
                 source: `cont_${task.contractor}`,
                 target: `loc_${task.location}`,
+                targetIsClashing: clashingLocations.has(task.location)
             });
         }
     }
@@ -196,14 +197,23 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
                 nodeLabel={(node: any) => node.name}
                 nodeColor={(node: any) => {
                     if (node.group === 'location') {
-                        return node.isClashing ? '#ef4444' : '#475569'; // Red vs slate-600
+                        return node.isClashing ? '#ef4444' : '#f8fafc'; // Red vs Bright White
                     }
-                    return node.color || '#8b5cf6';
+                    return node.color || '#3b82f6';
                 }}
-                linkColor={() => 'rgba(255,255,255,0.15)'}
-                linkWidth={1.5}
+                linkColor={(link: any) => link.targetIsClashing ? '#ef4444' : 'rgba(255,255,255,0.15)'}
+                linkWidth={(link: any) => link.targetIsClashing ? 2.5 : 1.5}
                 nodeCanvasObjectMode={() => 'after'}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                    // Force a dark border on Location nodes
+                    if (node.group === 'location') {
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
+                        ctx.strokeStyle = '#0f172a'; // dark border
+                        ctx.lineWidth = 2 / globalScale;
+                        ctx.stroke();
+                    }
+
                     const label = node.name;
                     const fontSize = node.group === 'location' ? 14 / Math.max(1, globalScale * 0.8) : 11 / Math.max(1, globalScale * 0.8);
                     ctx.font = `bold ${fontSize}px Inter, sans-serif`;
@@ -239,18 +249,22 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
             <h3 className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">Legend</h3>
             <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-3.5 h-3.5 rounded-full bg-slate-600" />
-                    <span className="text-xs font-semibold text-slate-200">Location Area</span>
+                    <div className="w-3.5 h-3.5 rounded-full bg-slate-50 border border-slate-900" />
+                    <span className="text-xs font-semibold text-slate-200">Location Hub</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative flex items-center justify-center w-3.5 h-3.5">
                         <div className="absolute inset-[-4px] rounded-full bg-red-500/20 animate-pulse" />
-                        <div className="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-400" />
+                        <div className="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-slate-900" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-200">Clash (Overlapping Dates)</span>
+                    <span className="text-xs font-semibold text-slate-200">Clashing Location</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                    <div className="w-6 h-0.5 bg-red-500" />
+                    <span className="text-xs font-semibold text-slate-200">Clashing Path</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                     <span className="text-xs font-semibold text-slate-200">Contractor Instance</span>
                 </div>
             </div>
