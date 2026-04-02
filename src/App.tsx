@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
   Plus, LayoutGrid,
   Download, Upload, Trash2, Settings,
-  CheckCheck, AlertCircle, ClipboardList, FileJson,
+  CheckCheck, AlertCircle, ClipboardList, FileJson, Calendar
 } from 'lucide-react';
 import type { Task, Discipline, DisciplineDef, Location } from './types';
 import { getTheme } from './theme';
@@ -17,7 +17,7 @@ const DEFAULT_DISCIPLINES: DisciplineDef[] = [
   { name: 'Electrical', theme: 'green' },
   { name: 'Steelwork', theme: 'orange' },
 ];
-import PlanningGrid from './PlanningGrid';
+import PlanningGrid, { type PlanningGridRef } from './PlanningGrid';
 import AddTaskModal from './AddTaskModal';
 import TaskDrawer from './TaskDrawer';
 import GridSettingsModal from './GridSettingsModal';
@@ -45,6 +45,8 @@ function loadSaved(): Record<string, unknown> | null {
 }
 
 export default function App() {
+  const gridRef = useRef<PlanningGridRef>(null);
+
   // ── Core state (lazy-initialised from localStorage) ──────
   const [tasks, setTasks] = useState<Task[]>(() => {
     const s = loadSaved();
@@ -273,6 +275,7 @@ export default function App() {
         const extra = (importedNumWeeks || importedLocations)
           ? ` · grid restored (${importedNumWeeks ?? numWeeks}w × ${(importedLocations ?? locations).length} loc)` : '';
         showToast('success', `✓ Imported ${validated.length} tasks from "${file.name}"${extra}`);
+        setTimeout(() => gridRef.current?.scrollToToday(), 100);
       } catch (err) {
         showToast('error', `Import failed: ${(err as Error).message}`);
       }
@@ -396,6 +399,16 @@ export default function App() {
               </div>
             </div>
 
+            {/* Go to Today */}
+            <button
+              onClick={() => gridRef.current?.scrollToToday()}
+              className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
+              title="Scroll to today's date"
+            >
+              <Calendar size={14} strokeWidth={2.5} />
+              Today
+            </button>
+
             {/* Grid settings */}
             <button
               onClick={() => setShowGridSettings(true)}
@@ -498,6 +511,7 @@ export default function App() {
       {/* ── BOARD (with empty-state overlay) ───────────────── */}
       <div className="relative flex-1 overflow-hidden">
         <PlanningGrid
+          ref={gridRef}
           tasks={tasks}
           startDate={projectStartDate}
           numWeeks={numWeeks}

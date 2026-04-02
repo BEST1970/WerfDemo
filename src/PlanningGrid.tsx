@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
 import type { Task, Location, DisciplineDef } from './types';
 import TaskCard from './TaskCard';
 
@@ -74,7 +74,11 @@ interface ResizeRef {
   startDuration: number;
   currentDuration: number;
 }
-export default function PlanningGrid({ tasks, startDate, numWeeks, locations, disciplines, onTaskMove, onTaskClick, onCellClick, onResize }: Props) {
+export interface PlanningGridRef {
+  scrollToToday: () => void;
+}
+
+export default forwardRef<PlanningGridRef, Props>(function PlanningGrid({ tasks, startDate, numWeeks, locations, disciplines, onTaskMove, onTaskClick, onCellClick, onResize }, ref) {
 
   // ── Derived grid structures (memoised — recompute when start date or dimensions change) ──
   const COLUMNS = useMemo(() => buildColumns(startDate, numWeeks), [startDate, numWeeks]);
@@ -92,6 +96,45 @@ export default function PlanningGrid({ tasks, startDate, numWeeks, locations, di
   // ── Resize state ──────────────────────────────────────────
   const resizeRef = useRef<ResizeRef | null>(null);
   const [resizePreview, setResizePreview] = useState<{ taskId: string; duration: number } | null>(null);
+
+  // ── Auto-scroll to today ──────────────────────────────────
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const getTodayScrollIdx = useMemo(() => {
+    return () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const exactColIdx = DATE_TO_COL_IDX.get(today);
+      if (exactColIdx !== undefined) return exactColIdx;
+      
+      if (COLUMNS.length === 0) return 0;
+
+      const todayMs = new Date(today).getTime();
+      const startMs = new Date(COLUMNS[0].date).getTime();
+      const endMs = new Date(COLUMNS[COLUMNS.length - 1].date).getTime();
+
+      if (todayMs < startMs || todayMs > endMs) return 0;
+
+      const idx = COLUMNS.findIndex(c => new Date(c.date).getTime() >= todayMs);
+      return idx !== -1 ? idx : COLUMNS.length - 1;
+    };
+  }, [DATE_TO_COL_IDX, COLUMNS]);
+
+  useImperativeHandle(ref, () => ({
+    scrollToToday: () => {
+      if (!containerRef.current) return;
+      const colIdx = getTodayScrollIdx();
+      containerRef.current.scrollTo({ left: colIdx * CELL_W, behavior: 'smooth' });
+    }
+  }));
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const colIdx = getTodayScrollIdx();
+    // Use setTimeout to ensure the grid is fully rendered before scrolling
+    setTimeout(() => {
+      containerRef.current?.scrollTo({ left: colIdx * CELL_W, behavior: 'smooth' });
+    }, 50);
+  }, [getTodayScrollIdx, tasks.length]); // Add tasks.length so it scrolls after importing a planning where dimensions stay identical
 
   // Register global mouse listeners once — read mutable state via ref
   useEffect(() => {
@@ -202,7 +245,7 @@ export default function PlanningGrid({ tasks, startDate, numWeeks, locations, di
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className="flex-1 h-full overflow-auto" style={{ background: '#f1f5f9' }}>
+    <div ref={containerRef} className="flex-1 h-full overflow-auto" style={{ background: '#f1f5f9' }}>
       <div
         style={{
           display: 'grid',
@@ -327,4 +370,4 @@ export default function PlanningGrid({ tasks, startDate, numWeeks, locations, di
       </div>
     </div>
   );
-}
+});
