@@ -26,6 +26,7 @@ function ListSection({
   onNewValueChange,
   error,
   emptyMsg,
+  onReorder,
 }: {
   badge: string;
   title: string;
@@ -38,7 +39,34 @@ function ListSection({
   onNewValueChange: (v: string) => void;
   error: string;
   emptyMsg: string;
+  onReorder: (fromIdx: number, toIdx: number) => void;
 }) {
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+
+  function handleDragStart(e: React.DragEvent, idx: number) {
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', idx.toString());
+    }
+    setDraggedIdx(idx);
+  }
+
+  function handleDragEnter(e: React.DragEvent, idx: number) {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === idx) return;
+    onReorder(draggedIdx, idx);
+    setDraggedIdx(idx);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleDragEnd() {
+    setDraggedIdx(null);
+  }
+
   const inputCls =
     'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 ' +
     'placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition';
@@ -57,29 +85,7 @@ function ListSection({
         </span>
       </div>
 
-      <div className="space-y-1.5 mb-3">
-        {items.length === 0 && (
-          <p className="text-xs text-slate-400 italic text-center py-3">{emptyMsg}</p>
-        )}
-        {items.map((item, idx) => (
-          <div
-            key={`${item}-${idx}`}
-            className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 group"
-          >
-            <GripVertical size={14} className="text-slate-300 flex-shrink-0" />
-            <span className="flex-1 text-sm font-medium text-slate-700">{item}</span>
-            <button
-              onClick={() => onRemove(idx)}
-              className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
-              title={`Remove "${item}"`}
-            >
-              <Trash2 size={13} strokeWidth={2.5} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex gap-2">
+      <div className="flex gap-2 mb-3">
         <input
           type="text"
           placeholder={addPlaceholder}
@@ -95,7 +101,35 @@ function ListSection({
           <Plus size={15} strokeWidth={2.5} /> Add
         </button>
       </div>
-      {error && <p className="text-xs text-red-600 mt-1.5">{error}</p>}
+      {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+        {items.length === 0 && (
+          <p className="text-xs text-slate-400 italic py-3 col-span-full">{emptyMsg}</p>
+        )}
+        {items.map((item, idx) => (
+          <div
+            key={item}
+            draggable
+            onDragStart={(e) => handleDragStart(e, idx)}
+            onDragEnter={(e) => handleDragEnter(e, idx)}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            className={`flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 group cursor-grab active:cursor-grabbing transition-transform
+              ${draggedIdx === idx ? 'opacity-40 scale-95 border-indigo-300' : ''}`}
+          >
+            <GripVertical size={14} className="text-slate-300 flex-shrink-0" />
+            <span className="flex-1 text-sm font-medium text-slate-700">{item}</span>
+            <button
+              onClick={() => onRemove(idx)}
+              className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+              title={`Remove "${item}"`}
+            >
+              <Trash2 size={13} strokeWidth={2.5} />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -115,6 +149,7 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
   const [locError,    setLocError]    = useState('');
   const [ctorError,   setCtorError]   = useState('');
   const [discError,   setDiscError]   = useState('');
+  const [draggedDiscIdx, setDraggedDiscIdx] = useState<number | null>(null);
 
   function handleWeeksChange(val: string) {
     setWeeksError('');
@@ -130,6 +165,14 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
     setLocs((p) => [...p, t]); setNewLoc(''); setLocError('');
   }
   function removeLocation(idx: number) { setLocs((p) => p.filter((_, i) => i !== idx)); }
+  function reorderLocation(from: number, to: number) {
+    setLocs(prev => {
+      const copy = [...prev];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  }
 
   // ── Contractors helpers ───────────────────────
   function addContractor() {
@@ -139,6 +182,14 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
     setCtors((p) => [...p, t]); setNewCtor(''); setCtorError('');
   }
   function removeContractor(idx: number) { setCtors((p) => p.filter((_, i) => i !== idx)); }
+  function reorderContractor(from: number, to: number) {
+    setCtors(prev => {
+      const copy = [...prev];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  }
 
   // ── Disciplines helpers ───────────────────────
   function addDiscipline() {
@@ -150,6 +201,14 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
     setDiscError('');
   }
   function removeDiscipline(idx: number) { setDiscs((p) => p.filter((_, i) => i !== idx)); }
+  function reorderDiscipline(from: number, to: number) {
+    setDiscs(prev => {
+      const copy = [...prev];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  }
 
   function handleSave() {
     if (!startDate) { setDateError('Please select a valid start date.'); return; }
@@ -172,7 +231,7 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
       className="modal-backdrop fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/50"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-900 to-slate-700 flex-shrink-0">
@@ -261,6 +320,7 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
             onNewValueChange={(v) => { setNewLoc(v); setLocError(''); }}
             error={locError}
             emptyMsg="No locations defined."
+            onReorder={reorderLocation}
           />
 
           <div className="border-t border-slate-100" />
@@ -278,6 +338,7 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
             onNewValueChange={(v) => { setNewCtor(v); setCtorError(''); }}
             error={ctorError}
             emptyMsg="No contractors defined."
+            onReorder={reorderContractor}
           />
 
           {/* ── Section 4: Disciplines ──────────────────────── */}
@@ -295,33 +356,7 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
               </span>
             </div>
 
-            <div className="space-y-1.5 mb-3">
-              {discs.length === 0 && (
-                <p className="text-xs text-slate-400 italic text-center py-3">No disciplines defined.</p>
-              )}
-              {discs.map((disc, idx) => {
-                const theme = getTheme(disc.theme);
-                const Icon = theme.Icon;
-                return (
-                  <div key={`${disc.name}-${idx}`} className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 group">
-                    <GripVertical size={14} className="text-slate-300 flex-shrink-0" />
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                      <Icon size={12} strokeWidth={2.5} />
-                      {disc.name}
-                    </span>
-                    <div className="flex-1" />
-                    <button
-                      onClick={() => removeDiscipline(idx)}
-                      className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={13} strokeWidth={2.5} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 placeholder="e.g. Plumbing..."
@@ -346,7 +381,56 @@ export default function GridSettingsModal({ numWeeks, locations, contractors, di
                 <Plus size={15} strokeWidth={2.5} /> Add
               </button>
             </div>
-            {discError && <p className="text-xs text-red-600 mt-1.5">{discError}</p>}
+            {discError && <p className="text-xs text-red-600 mt-1.5 mb-3">{discError}</p>}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              {discs.length === 0 && (
+                <p className="text-xs text-slate-400 italic text-center py-3 col-span-full">No disciplines defined.</p>
+              )}
+              {discs.map((disc, idx) => {
+                const theme = getTheme(disc.theme);
+                const Icon = theme.Icon;
+                return (
+                  <div
+                    key={disc.name}
+                    draggable
+                    onDragStart={(e) => {
+                      if (e.dataTransfer) {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', idx.toString());
+                      }
+                      setDraggedDiscIdx(idx);
+                    }}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      if (draggedDiscIdx === null || draggedDiscIdx === idx) return;
+                      reorderDiscipline(draggedDiscIdx, idx);
+                      setDraggedDiscIdx(idx);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDragEnd={() => setDraggedDiscIdx(null)}
+                    className={`flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 group cursor-grab active:cursor-grabbing transition-transform
+                      ${draggedDiscIdx === idx ? 'opacity-40 scale-95 border-indigo-300' : ''}`}
+                  >
+                    <GripVertical size={14} className="text-slate-300 flex-shrink-0" />
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                      <Icon size={12} strokeWidth={2.5} />
+                      {disc.name}
+                    </span>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => removeDiscipline(idx)}
+                      className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 size={13} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Info notice */}
