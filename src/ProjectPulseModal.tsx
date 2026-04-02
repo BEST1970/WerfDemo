@@ -46,7 +46,7 @@ export default function ProjectPulseModal({ tasks, projectTitle, onClose }: Prop
         group: 'project',
         name: projectTitle,
         val: 28,
-        color: '#fef08a' // Soft pale gold
+        color: '#f8fafc' // Soft clean white/silver
     });
     
     // 2. Map disciplines and translate to Dutch
@@ -163,7 +163,7 @@ export default function ProjectPulseModal({ tasks, projectTitle, onClose }: Prop
                     if (node.group === 'project') {
                         ctx.beginPath();
                         ctx.arc(node.x, node.y, node.val + 8, 0, 2 * Math.PI, false);
-                        ctx.fillStyle = 'rgba(254, 240, 138, 0.15)'; // Soft gold glow
+                        ctx.fillStyle = 'rgba(248, 250, 252, 0.15)'; // Soft white/silver glow
                         ctx.fill();
                         
                         ctx.beginPath();
@@ -204,8 +204,8 @@ export default function ProjectPulseModal({ tasks, projectTitle, onClose }: Prop
             <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                     <div className="relative flex items-center justify-center w-4 h-4">
-                        <div className="absolute inset-[-4px] rounded-full bg-yellow-200/20" />
-                        <div className="w-4 h-4 rounded-full bg-yellow-200 border-2 border-white" />
+                        <div className="absolute inset-[-4px] rounded-full bg-slate-100/20" />
+                        <div className="w-4 h-4 rounded-full bg-slate-100 border-2 border-white" />
                     </div>
                     <span className="text-xs font-semibold text-slate-300">Project Core</span>
                 </div>
