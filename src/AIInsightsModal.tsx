@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
+import * as d3 from 'd3-force';
 import { X, Activity } from 'lucide-react';
 import type { Task } from './types';
 
@@ -11,6 +12,7 @@ interface Props {
 export default function AIInsightsModal({ tasks, onClose }: Props) {
   const [activeTab, setActiveTab] = useState('Clash Detection');
   const containerRef = useRef<HTMLDivElement>(null);
+  const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
             group: 'location',
             name: loc,
             isClashing: clashingLocations.has(loc),
-            val: 10 // larger visually
+            val: 18 // significantly larger
         });
     }
 
@@ -105,7 +107,7 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
             group: 'contractor',
             name: cont,
             color: contractorMap.get(cont),
-            val: 5 // smaller visually
+            val: 6 // smaller
         });
     }
 
@@ -124,6 +126,22 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
 
     return { nodes, links };
   }, [tasks]);
+
+  useEffect(() => {
+    // Override the default force simulation settings whenever the graph data or dimensions change
+    if (fgRef.current && graphData.nodes.length > 0) {
+        // Dramatic increase to node repulsion to prevent clumping
+        fgRef.current.d3Force('charge').strength(-1200).distanceMax(1000);
+        
+        // Robust collision detection relative to the node sizes (accounting for text labels)
+        const collisionForce = d3.forceCollide((node: any) => {
+            return (node.val * 2) + 24; // Base padding thick enough to prevent text overlap
+        });
+        fgRef.current.d3Force('collide', collisionForce);
+        
+        fgRef.current.d3ReheatSimulation();
+    }
+  }, [graphData, dimensions]);
 
   return (
     <div className="fixed inset-0 z-[1000] flex flex-col bg-slate-950/85 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
@@ -169,6 +187,7 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
             </div>
         ) : (
             <ForceGraph2D
+                ref={fgRef}
                 width={dimensions.width}
                 height={dimensions.height}
                 graphData={graphData}
