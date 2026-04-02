@@ -126,16 +126,16 @@ export default function App() {
   // ── Active contractors legend ─────────────────────────────────
   // Stable palette — each contractor gets a consistent hue based on its name
   const CONTRACTOR_PALETTE = [
-    { bg: 'bg-violet-600',  text: 'text-white',       ring: 'ring-violet-300'  },
-    { bg: 'bg-blue-600',    text: 'text-white',       ring: 'ring-blue-300'    },
-    { bg: 'bg-emerald-600', text: 'text-white',       ring: 'ring-emerald-300' },
-    { bg: 'bg-amber-500',   text: 'text-white',       ring: 'ring-amber-300'   },
-    { bg: 'bg-rose-600',    text: 'text-white',       ring: 'ring-rose-300'    },
-    { bg: 'bg-cyan-600',    text: 'text-white',       ring: 'ring-cyan-300'    },
-    { bg: 'bg-indigo-600',  text: 'text-white',       ring: 'ring-indigo-300'  },
-    { bg: 'bg-teal-600',    text: 'text-white',       ring: 'ring-teal-300'    },
-    { bg: 'bg-fuchsia-600', text: 'text-white',       ring: 'ring-fuchsia-300' },
-    { bg: 'bg-orange-600',  text: 'text-white',       ring: 'ring-orange-300'  },
+    { bg: 'bg-violet-100',  text: 'text-violet-800',  ring: 'ring-violet-300'  },
+    { bg: 'bg-blue-100',    text: 'text-blue-800',    ring: 'ring-blue-300'    },
+    { bg: 'bg-emerald-100', text: 'text-emerald-800', ring: 'ring-emerald-300' },
+    { bg: 'bg-amber-100',   text: 'text-amber-800',   ring: 'ring-amber-300'   },
+    { bg: 'bg-rose-100',    text: 'text-rose-800',    ring: 'ring-rose-300'    },
+    { bg: 'bg-cyan-100',    text: 'text-cyan-800',    ring: 'ring-cyan-300'    },
+    { bg: 'bg-indigo-100',  text: 'text-indigo-800',  ring: 'ring-indigo-300'  },
+    { bg: 'bg-teal-100',    text: 'text-teal-800',    ring: 'ring-teal-300'    },
+    { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800', ring: 'ring-fuchsia-300' },
+    { bg: 'bg-orange-100',  text: 'text-orange-800',  ring: 'ring-orange-300'  },
   ];
   /** Derive 2-letter initials: first char of each word (up to 2 words), else first 2 chars */
   function contractorInitials(name: string): string {
