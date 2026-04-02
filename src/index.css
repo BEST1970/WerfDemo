@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Grid cell drop highlight */
+.cell-drag-over {
+  background-color: #dbeafe !important;
+  border-color: #3b82f6 !important;
+  box-shadow: inset 0 0 0 2px #3b82f6;
+}
+
+/* Task card drag state */
+.task-dragging {
+  opacity: 0.4;
+  transform: scale(0.97);
+}
+
+/* Grab cursor for task cards */
+.task-card {
+  cursor: grab;
+  user-select: none;
+}
+.task-card:active {
+  cursor: grabbing;
+}
+
+/* Sticky header/sidebar z-index layering */
+.header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.sidebar-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+}
+.corner-sticky {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 40;
+}
+
+/* Subtle grid texture */
+.grid-cell {
+  background-image: 
+    linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Smooth transitions */
+.task-card {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.task-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+/* Modal backdrop blur */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Week header gradient */
+.week-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+/* Toast slide-up entrance animation */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
