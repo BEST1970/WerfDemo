@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
   Plus, LayoutGrid,
   Download, Upload, Trash2, Settings,
-  CheckCheck, AlertCircle, ClipboardList, FileJson, Calendar, Network
+  CheckCheck, AlertCircle, ClipboardList, FileJson, Calendar, Network, Activity
 } from 'lucide-react';
 import type { Task, Discipline, DisciplineDef, Location } from './types';
 import { getTheme } from './theme';
@@ -22,6 +22,7 @@ import AddTaskModal from './AddTaskModal';
 import TaskDrawer from './TaskDrawer';
 import GridSettingsModal from './GridSettingsModal';
 import AIInsightsModal from './AIInsightsModal';
+import ProjectPulseModal from './ProjectPulseModal';
 
 interface ModalContext { date: string; location: Location; }
 
@@ -77,6 +78,7 @@ export default function App() {
   });
   const [showGridSettings, setShowGridSettings] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
+  const [showPulseModal, setShowPulseModal] = useState(false);
 
   // ── Project metadata (lazy-initialised) ───────────────────
   const [projectTitle, setProjectTitle] = useState<string>(() => {
@@ -414,6 +416,16 @@ export default function App() {
                 <Network size={14} strokeWidth={2.5} />
                 Clash Analysis
               </button>
+
+              {/* Project Pulse */}
+              <button
+                onClick={() => setShowPulseModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 hover:text-blue-800 transition-all active:scale-95 shadow-sm"
+                title="Project Pulse Schedule Core"
+              >
+                <Activity size={14} strokeWidth={2.5} />
+                Project Pulse
+              </button>
             </div>
           </div>
 
@@ -621,8 +633,16 @@ export default function App() {
       {showInsightsModal && (
         <AIInsightsModal
             tasks={tasks}
-            projectTitle={projectTitle}
             onClose={() => setShowInsightsModal(false)}
+        />
+      )}
+
+      {/* ── PROJECT PULSE OVERLAY ──────────────────────────── */}
+      {showPulseModal && (
+        <ProjectPulseModal
+            tasks={tasks}
+            projectTitle={projectTitle}
+            onClose={() => setShowPulseModal(false)}
         />
       )}
 
