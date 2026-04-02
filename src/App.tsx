@@ -380,28 +380,9 @@ export default function App() {
                 className="text-xl font-bold text-slate-900 border-none bg-transparent focus:ring-0 focus:outline-none leading-tight mt-0.5 placeholder-slate-300"
               />
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            {/* Progress ring */}
-            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 mr-1">
-              <div className="relative w-8 h-8">
-                <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" strokeWidth="3.5" />
-                  <circle cx="18" cy="18" r="14" fill="none" stroke="#10b981" strokeWidth="3.5"
-                    strokeDasharray={`${donePercent * 0.879} 87.96`} strokeLinecap="round" />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-700">
-                  {donePercent}%
-                </span>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold text-slate-700 leading-tight">{doneTasks}/{totalTasks} done</p>
-                <p className="text-[10px] text-slate-400">{activeTasks} active</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 border border-slate-200/60 rounded-xl mr-1">
+            {/* View Controls Group (Left-aligned) */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 border border-slate-200/60 rounded-xl">
               {/* Go to Today */}
               <button
                 onClick={() => gridRef.current?.scrollToToday()}
@@ -433,6 +414,26 @@ export default function App() {
                 <Network size={14} strokeWidth={2.5} />
                 Clash Analysis
               </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Progress ring */}
+            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 mr-1">
+              <div className="relative w-8 h-8">
+                <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" strokeWidth="3.5" />
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="#10b981" strokeWidth="3.5"
+                    strokeDasharray={`${donePercent * 0.879} 87.96`} strokeLinecap="round" />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-700">
+                  {donePercent}%
+                </span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-700 leading-tight">{doneTasks}/{totalTasks} done</p>
+                <p className="text-[10px] text-slate-400">{activeTasks} active</p>
+              </div>
             </div>
 
             {/* Import */}
