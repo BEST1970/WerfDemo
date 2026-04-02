@@ -621,6 +621,7 @@ export default function App() {
       {showInsightsModal && (
         <AIInsightsModal
             tasks={tasks}
+            projectTitle={projectTitle}
             onClose={() => setShowInsightsModal(false)}
         />
       )}
