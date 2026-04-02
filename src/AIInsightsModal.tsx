@@ -197,9 +197,9 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
                 nodeLabel={(node: any) => node.name}
                 nodeColor={(node: any) => {
                     if (node.group === 'location') {
-                        return node.isClashing ? '#ef4444' : '#f8fafc'; // Red vs Bright White
+                        return node.isClashing ? '#ef4444' : '#93c5fd'; // Red vs Soft Blue
                     }
-                    return node.color || '#3b82f6';
+                    return '#86efac'; // Soft Green for contractors
                 }}
                 linkColor={(link: any) => link.targetIsClashing ? '#ef4444' : 'rgba(255,255,255,0.15)'}
                 linkWidth={(link: any) => link.targetIsClashing ? 2.5 : 1.5}
@@ -249,7 +249,7 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
             <h3 className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">Legend</h3>
             <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-3.5 h-3.5 rounded-full bg-slate-50 border border-slate-900" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-blue-300 border border-slate-900" />
                     <span className="text-xs font-semibold text-slate-200">Location Hub</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -264,7 +264,7 @@ export default function AIInsightsModal({ tasks, onClose }: Props) {
                     <span className="text-xs font-semibold text-slate-200">Clashing Path</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-300" />
                     <span className="text-xs font-semibold text-slate-200">Contractor Instance</span>
                 </div>
             </div>
